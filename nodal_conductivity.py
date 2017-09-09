@@ -14,7 +14,7 @@ from numpy import *
 
 # Setting up argument parsing
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-#parser.add_argument('--out'   , dest='out'   , default='sigma.dat'       ,help='Name of the output file')
+parser.add_argument('--out'   , dest='out'   , default=False             ,help='Name of the output file')
 parser.add_argument('--sigma' , dest='sigma' , default='zz'              ,help='Direction pair of the conductivity calculated')
 parser.add_argument('--dim'   , dest='dim'   , default=10   ,type=int    ,help='Width of the sample')
 parser.add_argument('--theta' , dest='theta0', default=0    ,type=float  ,help='Angle theta of the node orientation')
@@ -22,6 +22,7 @@ parser.add_argument('--phi'   , dest='phi0'  , default=0    ,type=float  ,help='
 parser.add_argument('--B'     , dest='B'     , default=0    ,type=float  ,help='Magnetic field strength, fixed in the z direction')
 parser.add_argument('--numrnd', dest='numrnd', default=1    ,type=int    ,help='Number of random vectors for the conductivity calculation')
 parser.add_argument('--broad' , dest='broad' , default=0.1  ,type=float  ,help='Broadening of the conductivity calculation')
+parser.add_argument('--dos'   , dest='dos'   , default=False,type=bool   ,help='Only calculate dos')
 
 
 args = parser.parse_args()
@@ -63,18 +64,26 @@ def mymodel(dim=20,phi=0,theta=0,B=0.0):
     return model
 
 # Calculate DOS
+# We use jackson kernel here that is good for DOS
 kpm   = pb.kpm(mymodel(args.dim,phi,theta,args.B),silent=True,
-               energy_range=[-13,13],kernel=pb.jackson_kernel()) # We use jackson kernel here that is good for DOS
+               energy_range=[-13,13],kernel=pb.jackson_kernel()) 
 dos=kpm.calc_ldos(energy=linspace(-15,15,1000),position=[0,0,0],broadening=0.05)
 
-# Calculate conductivity
-kpm   = pb.kpm(mymodel(args.dim,phi,theta,args.B),silent=True,
-               energy_range=[-13,13],kernel=pb.lorentz_kernel()) # We use Lorentz kernel here that is needed for the conductivity
-sigma = kpm.calc_conductivity(chemical_potential=linspace(-2, 2, 100),
+if args.dos==False:
+    # Calculate conductivity
+    # We use Lorentz kernel here that is needed for the conductivity
+    kpm   = pb.kpm(mymodel(args.dim,phi,theta,args.B),silent=True,
+               energy_range=[-13,13],kernel=pb.lorentz_kernel()) 
+    sigma = kpm.calc_conductivity(chemical_potential=linspace(-2, 2, 100),
                               broadening=args.broad,temperature=0,direction=args.sigma,
                               volume=args.dim**3,num_random=args.numrnd)
-# make output file
-out='-'.join(['sigma',args.sigma,
+# make output file name
+if args.dos==False:
+    s_or_d='sigma'
+else:
+    s_or_d='dos'
+if args.out==False:    
+    out='-'.join([s_or_d ,args.sigma,
                 'dim',str(args.dim),
               'theta',str(args.theta0),
                 'phi',str(args.phi0),
@@ -84,4 +93,5 @@ out='-'.join(['sigma',args.sigma,
 with open(out, 'wb') as handle:
     pickle.dump(args , handle, protocol=pickle.HIGHEST_PROTOCOL)
     pickle.dump(dos  , handle, protocol=pickle.HIGHEST_PROTOCOL)
-    pickle.dump(sigma, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    if args.dos==False:
+        pickle.dump(sigma, handle, protocol=pickle.HIGHEST_PROTOCOL)
