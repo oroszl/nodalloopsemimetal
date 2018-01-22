@@ -46,10 +46,10 @@ def mymodel(dim=20,theta=0,B=0.0):
     S1=array([[0,1],[1,0]])
     S2=array([[0,-1j],[1j,0]])
     S3=array([[1,0],[0,-1]])   
-    Tx=S3       # Hopping in the x direction
-    Ty=S3       # Hopping in the y direction
-    Tz=S3+1j*S1 # Hopping in the z direction
-    U=-5*S3     # Onsite term
+    Tx=-S3       # Hopping in the x direction
+    Ty=-S3       # Hopping in the y direction
+    Tz=-S3-1j*S1 # Hopping in the z direction
+    U=5*S3     # Onsite term
     # Building the lattice model
     lat=pb.Lattice(a1=[1,0,0],a2=[0,1,0],a3=[0,0,1])
     lat.add_sublattices(('A', [0,0,0],U ))
