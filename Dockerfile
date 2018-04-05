@@ -7,5 +7,5 @@ RUN conda install numpy scipy
 RUN conda install ipyvolume 
 RUN conda install tqdm
 RUN pip install pybinding --user --upgrade
-RUN conda install matplotlib=2.1.1
+RUN pip install matplotlib==2.1.1 --user
 RUN git clone https://github.com/oroszl/nodalloopsemimetal
